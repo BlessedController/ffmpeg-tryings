@@ -15,8 +15,8 @@ import java.util.List;
 @Service
 public class VideoProcessingServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(VideoProcessingServiceImpl.class);
-    private static final String FOLDER_DIR_NAME = "0000111aaaa_temp_hls_dir";
-    private static final String FILE_DIR_PREFIX = "0000111aaaa_temp_raw_video_file_";
+    private static final String FOLDER_DIR_NAME = "aaaa_temp_hls_dir";
+    private static final String FILE_DIR_PREFIX = "aaaa_temp_raw_video_file_";
     private static final String FILE_DIR_SUFFIX = ".tmp";
 
     public void processVideo(MultipartFile file) {
