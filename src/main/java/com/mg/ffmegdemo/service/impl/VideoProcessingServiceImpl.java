@@ -26,13 +26,15 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
 
         Path tempVideoFile = createTempVideoFile(file);
 
-        Process process = doFFMPEGProcess(tempFolderDir, tempVideoFile);
+        ProcessBuilder process = getFFMPEGProcessBuilder(tempFolderDir, tempVideoFile);
 
-        handleProcess(process);
+        handleProcessBuilder(process);
     }
 
-    private void handleProcess(Process process) {
+    private void handleProcessBuilder(ProcessBuilder processBuilder) {
         try {
+            Process process = processBuilder.start();
+
             consumeProcessLogs(process);
 
             int exitCode = process.waitFor();
@@ -42,6 +44,8 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
                 throw new RuntimeException();
             }
         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -72,7 +76,7 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
         return folderFile;
     }
 
-    private Process doFFMPEGProcess(Path hlsTempDir, Path tempRawFile) {
+    private ProcessBuilder getFFMPEGProcessBuilder(Path hlsTempDir, Path tempRawFile) {
 
         List<String> cmd = new ArrayList<>();
 
@@ -130,12 +134,9 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
-        try {
-            return pb.start();
-        } catch (IOException e) {
-            log.error("An IO Exception occured during FFMPEG start : {}", e.getMessage());
-            throw new RuntimeException();
-        }
+
+        return pb;
+
     }
 
     private void addQuality(int index, String videoBitRateInKPS, String audioBitrateInKPS, int width, List<String> cmd) {
