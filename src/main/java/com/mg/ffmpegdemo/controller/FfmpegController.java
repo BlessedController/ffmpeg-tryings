@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-public class FFMEGController {
+public class FfmpegController {
 
     private final VideoProcessingService videoProcessingService;
 
-    public FFMEGController(VideoProcessingService videoProcessingService) {
+    public FfmpegController(VideoProcessingService videoProcessingService) {
         this.videoProcessingService = videoProcessingService;
     }
 
