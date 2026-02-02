@@ -58,7 +58,7 @@ public class VideoProcessingServiceImpl {
         Path folderFile;
         try {
 
-            folderFile = Files.createTempFile("temp_raw_video_file", ".tmp");
+            folderFile = Files.createTempFile("temp_raw_video_file_", ".tmp");
 
             file.transferTo(folderFile);
 
@@ -75,6 +75,9 @@ public class VideoProcessingServiceImpl {
         List<String> cmd = new ArrayList<>();
 
         cmd.add("ffmpeg");
+        cmd.add("-threads");
+        cmd.add("2");
+
 
         cmd.add("-i");
         cmd.add(tempRawFile.toString());
