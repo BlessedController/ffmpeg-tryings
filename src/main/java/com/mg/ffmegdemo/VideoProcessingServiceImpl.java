@@ -15,15 +15,16 @@ import java.util.List;
 @Service
 public class VideoProcessingServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(VideoProcessingServiceImpl.class);
-    private static final String FOLDER_DIR = "D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderDir";
-
+    private static final String FOLDER_DIR_NAME = "0000111aaaa_temp_hls_dir";
+    private static final String FILE_DIR_PREFIX = "0000111aaaa_temp_raw_video_file_";
+    private static final String FILE_DIR_SUFFIX = ".tmp";
 
     public void processVideo(MultipartFile file) {
-        Path folderDir = createFolderDir();
+        Path tempFolderDir = createFolderDir();
 
         Path tempVideoFile = createTempVideoFile(file);
 
-        Process process = this.doFFMPEGProcess(folderDir, tempVideoFile);
+        Process process = this.doFFMPEGProcess(tempFolderDir, tempVideoFile);
 
         handleLogs(process);
     }
@@ -46,7 +47,7 @@ public class VideoProcessingServiceImpl {
     private Path createFolderDir() {
         Path folderDir;
         try {
-            folderDir = Files.createDirectory(Path.of(FOLDER_DIR + System.currentTimeMillis()));
+            folderDir = Files.createTempDirectory(FOLDER_DIR_NAME + System.currentTimeMillis());
         } catch (IOException e) {
             log.error(" An IO Exception oocurred creating folder {}", e.getMessage());
             throw new RuntimeException();
@@ -58,7 +59,7 @@ public class VideoProcessingServiceImpl {
         Path folderFile;
         try {
 
-            folderFile = Files.createTempFile("temp_raw_video_file_", ".tmp");
+            folderFile = Files.createTempFile(FILE_DIR_PREFIX, FILE_DIR_SUFFIX);
 
             file.transferTo(folderFile);
 
