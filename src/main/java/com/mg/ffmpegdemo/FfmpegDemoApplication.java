@@ -1,13 +1,13 @@
-package com.mg.ffmegdemo;
+package com.mg.ffmpegdemo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class FfmegDemoApplication {
+public class FfmpegDemoApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(FfmegDemoApplication.class, args);
+        SpringApplication.run(FfmpegDemoApplication.class, args);
     }
 
 }

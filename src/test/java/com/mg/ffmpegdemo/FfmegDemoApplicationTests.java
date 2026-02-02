@@ -1,4 +1,4 @@
-package com.mg.ffmegdemo;
+package com.mg.ffmpegdemo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

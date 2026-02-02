@@ -1,7 +1,7 @@
-package com.mg.ffmegdemo.service.impl;
+package com.mg.ffmpegdemo.service.impl;
 
 
-import com.mg.ffmegdemo.service.VideoProcessingService;
+import com.mg.ffmpegdemo.service.VideoProcessingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

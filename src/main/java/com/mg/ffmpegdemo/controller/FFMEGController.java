@@ -1,6 +1,6 @@
-package com.mg.ffmegdemo.controller;
+package com.mg.ffmpegdemo.controller;
 
-import com.mg.ffmegdemo.service.VideoProcessingService;
+import com.mg.ffmpegdemo.service.VideoProcessingService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
