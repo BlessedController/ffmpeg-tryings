@@ -1,6 +1,8 @@
 package com.mg.ffmegdemo;
 
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class FFMEGController {
@@ -12,9 +14,9 @@ public class FFMEGController {
         this.videoProcessingService = videoProcessingService;
     }
 
-    @PostMapping
-    public void convert(@RequestBody Paths paths) {
-        videoProcessingService.processVideo(paths.folderDir(), paths.fileDir());
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void convert(@RequestParam MultipartFile file) {
+        videoProcessingService.processVideo(file);
     }
 
 }

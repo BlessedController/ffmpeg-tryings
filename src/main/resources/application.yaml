@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: ffmpeg-demo
+  servlet:
+    multipart:
+      max-request-size: 100MB

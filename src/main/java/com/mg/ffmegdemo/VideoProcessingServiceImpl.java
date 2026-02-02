@@ -4,9 +4,10 @@ package com.mg.ffmegdemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +16,18 @@ import java.util.List;
 public class VideoProcessingServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(VideoProcessingServiceImpl.class);
 
-    public void processVideo(String folderDirString, String fileDirString) {
 
-        Path folderDir = Paths.get(folderDirString);
-
-        Path fileDir = Paths.get(fileDirString);
-
-        ProcessBuilder ffmpegCommands = this.createFFMPEGCommands(folderDir, fileDir);
+    public void processVideo(MultipartFile file) {
 
         try {
+            Path folderDir = Paths.get("D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderDir");
+
+            Files.createDirectories(folderDir);
+
+            Path tempVideoFile = createTempVideoFile(file);
+
+            ProcessBuilder ffmpegCommands = this.createFFMPEGCommands(folderDir, tempVideoFile);
+
             Process process = ffmpegCommands.start();
 
             Thread writeProcessLogs = consumeProcessLogs(process);
@@ -46,7 +50,23 @@ public class VideoProcessingServiceImpl {
             log.error("An InterruptedException has occured durng ffmpeg processing. Exception Message: {}", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
 
+    private Path createTempVideoFile(MultipartFile file) {
+        try {
+            Path folderFile = Paths.get("D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderFile");
+
+            Files.createDirectories(folderFile);
+
+            Path tempRawFile = folderFile.resolve(System.currentTimeMillis() + ".tmp");
+
+            file.transferTo(tempRawFile);
+
+            return tempRawFile;
+        } catch (IOException e) {
+            log.error("IO exception occured during creating temp file or transferring raw video file to temp file : {}", e.getMessage());
+            throw new RuntimeException("An IO exception occured while creating raw video file");
+        }
     }
 
 
