@@ -7,70 +7,70 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.*;
-import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class VideoProcessingServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(VideoProcessingServiceImpl.class);
+    private static final String FOLDER_DIR = "D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderDir";
 
 
     public void processVideo(MultipartFile file) {
+        Path folderDir = createFolderDir();
 
+        Path tempVideoFile = createTempVideoFile(file);
+
+        Process process = this.doFFMPEGProcess(folderDir, tempVideoFile);
+
+        handleLogs(process);
+    }
+
+    private void handleLogs(Process process) {
         try {
-            Path folderDir = Paths.get("D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderDir");
-
-            Files.createDirectories(folderDir);
-
-            Path tempVideoFile = createTempVideoFile(file);
-
-            ProcessBuilder ffmpegCommands = this.createFFMPEGCommands(folderDir, tempVideoFile);
-
-            Process process = ffmpegCommands.start();
-
-            Thread writeProcessLogs = consumeProcessLogs(process);
-
-            writeProcessLogs.start();
+            consumeProcessLogs(process);
 
             int exitCode = process.waitFor();
 
-            writeProcessLogs.join();
-
             if (exitCode != 0) {
                 log.error("FFMPEG command failed with exit code {}", exitCode);
-                throw new RuntimeException("FFMPEG command failed with exit code " + exitCode);
+                throw new RuntimeException();
             }
-
-        } catch (IOException e) {
-            log.error("An IO exception has occured durng ffmpeg processing. Exception Message: {}", e.getMessage());
-            throw new RuntimeException(e);
         } catch (InterruptedException e) {
-            log.error("An InterruptedException has occured durng ffmpeg processing. Exception Message: {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    private Path createTempVideoFile(MultipartFile file) {
+    private Path createFolderDir() {
+        Path folderDir;
         try {
-            Path folderFile = Paths.get("D:\\MAHABBAT_GOZALOV\\FFMPEG\\folderFile");
+            folderDir = Files.createDirectory(Path.of(FOLDER_DIR + System.currentTimeMillis()));
+        } catch (IOException e) {
+            log.error(" An IO Exception oocurred creating folder {}", e.getMessage());
+            throw new RuntimeException();
+        }
+        return folderDir;
+    }
 
-            Files.createDirectories(folderFile);
+    private Path createTempVideoFile(MultipartFile file) {
+        Path folderFile;
+        try {
 
-            Path tempRawFile = folderFile.resolve(System.currentTimeMillis() + ".tmp");
+            folderFile = Files.createTempFile("temp_raw_video_file", ".tmp");
 
-            file.transferTo(tempRawFile);
+            file.transferTo(folderFile);
 
-            return tempRawFile;
         } catch (IOException e) {
             log.error("IO exception occured during creating temp file or transferring raw video file to temp file : {}", e.getMessage());
             throw new RuntimeException("An IO exception occured while creating raw video file");
         }
+        return folderFile;
     }
 
 
-    private ProcessBuilder createFFMPEGCommands(Path hlsTempDir, Path tempRawFile) {
+    private Process doFFMPEGProcess(Path hlsTempDir, Path tempRawFile) {
 
         List<String> cmd = new ArrayList<>();
 
@@ -171,11 +171,16 @@ public class VideoProcessingServiceImpl {
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
-        return pb;
+        try {
+            return pb.start();
+        } catch (IOException e) {
+            log.error("An IO Exception occured during FFMPEG start : {}", e.getMessage());
+            throw new RuntimeException();
+        }
     }
 
-    private Thread consumeProcessLogs(Process process) {
-        return new Thread(() -> {
+    private void consumeProcessLogs(Process process) {
+        new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -184,7 +189,7 @@ public class VideoProcessingServiceImpl {
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
-        });
+        }).start();
     }
 
 
