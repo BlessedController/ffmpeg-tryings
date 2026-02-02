@@ -1,5 +1,6 @@
-package com.mg.ffmegdemo;
+package com.mg.ffmegdemo.controller;
 
+import com.mg.ffmegdemo.service.VideoProcessingService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -7,10 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 public class FFMEGController {
 
-    private final VideoProcessingServiceImpl videoProcessingService;
+    private final VideoProcessingService videoProcessingService;
 
-
-    public FFMEGController(VideoProcessingServiceImpl videoProcessingService) {
+    public FFMEGController(VideoProcessingService videoProcessingService) {
         this.videoProcessingService = videoProcessingService;
     }
 

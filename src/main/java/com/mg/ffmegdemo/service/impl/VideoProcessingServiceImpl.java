@@ -1,6 +1,7 @@
-package com.mg.ffmegdemo;
+package com.mg.ffmegdemo.service.impl;
 
 
+import com.mg.ffmegdemo.service.VideoProcessingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,23 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class VideoProcessingServiceImpl {
+public class VideoProcessingServiceImpl implements VideoProcessingService {
     private static final Logger log = LoggerFactory.getLogger(VideoProcessingServiceImpl.class);
     private static final String FOLDER_DIR_NAME = "temp_hls_dir";
     private static final String FILE_DIR_PREFIX = "temp_raw_video_file_";
     private static final String FILE_DIR_SUFFIX = ".tmp";
 
+    @Override
     public void processVideo(MultipartFile file) {
         Path tempFolderDir = createFolderDir();
 
         Path tempVideoFile = createTempVideoFile(file);
 
-        Process process = this.doFFMPEGProcess(tempFolderDir, tempVideoFile);
+        Process process = doFFMPEGProcess(tempFolderDir, tempVideoFile);
 
-        handleLogs(process);
+        handleProcess(process);
     }
 
-    private void handleLogs(Process process) {
+    private void handleProcess(Process process) {
         try {
             consumeProcessLogs(process);
 
@@ -70,7 +72,6 @@ public class VideoProcessingServiceImpl {
         return folderFile;
     }
 
-
     private Process doFFMPEGProcess(Path hlsTempDir, Path tempRawFile) {
 
         List<String> cmd = new ArrayList<>();
@@ -90,68 +91,20 @@ public class VideoProcessingServiceImpl {
         cmd.add("-force_key_frames");
         cmd.add("expr:gte(t,n_forced*2)");
 
-        // region Quality 0 (1920p)
-        cmd.add("-filter:v:0");
-        cmd.add("scale=w=1920:h=-2");
-        cmd.add("-c:v:0");
-        cmd.add("libx264");
-        cmd.add("-b:v:0");
-        cmd.add("3000k");
-        cmd.add("-c:a:0");
-        cmd.add("aac");
-        cmd.add("-b:a:0");
-        cmd.add("128k");
-        //endregion
-
-        // region Quality 1 (1280p)
-        cmd.add("-filter:v:1");
-        cmd.add("scale=w=1280:h=-2");
-        cmd.add("-c:v:1");
-        cmd.add("libx264");
-        cmd.add("-b:v:1");
-        cmd.add("1800k");
-        cmd.add("-c:a:1");
-        cmd.add("aac");
-        cmd.add("-b:a:1");
-        cmd.add("128k");
-        //endregion
-
-        // region Quality 2 (854p)
-        cmd.add("-filter:v:2");
-        cmd.add("scale=w=854:h=-2");
-        cmd.add("-c:v:2");
-        cmd.add("libx264");
-        cmd.add("-b:v:2");
-        cmd.add("900k");
-        cmd.add("-c:a:2");
-        cmd.add("aac");
-        cmd.add("-b:a:2");
-        cmd.add("96k");
-        //endregion
-
-        // region Quality 3 (640p)
-        cmd.add("-filter:v:3");
-        cmd.add("scale=w=640:h=-2");
-        cmd.add("-c:v:3");
-        cmd.add("libx264");
-        cmd.add("-b:v:3");
-        cmd.add("600k");
-        cmd.add("-c:a:3");
-        cmd.add("aac");
-        cmd.add("-b:a:3");
-        cmd.add("96k");
-        //endregion
-
-        // region Stream Mapping
         for (int i = 0; i < 4; i++) {
             cmd.add("-map");
             cmd.add("0:v:0");
             cmd.add("-map");
             cmd.add("0:a:0");
         }
-        //endregion
 
-        // region HLS Settings
+        addQuality(0, "600k", "96k", 640, cmd);
+        addQuality(1, "900k", "96k", 854, cmd);
+        addQuality(2, "1800k", "128k", 1280, cmd);
+        addQuality(3, "3000k", "128k", 1920, cmd);
+
+
+        // region Output Settings
         cmd.add("-f");
         cmd.add("hls");
 
@@ -161,16 +114,18 @@ public class VideoProcessingServiceImpl {
         cmd.add("-hls_playlist_type");
         cmd.add("vod");
 
+        cmd.add("-var_stream_map");
+        cmd.add("v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3");
+        // endregion
+
+        // region Names
         cmd.add("-hls_segment_filename");
-        cmd.add(hlsTempDir.toString() + "/v%v/segment%d.ts");
+        cmd.add(hlsTempDir.resolve("v%v/segment%d.ts").toString());
 
         cmd.add("-master_pl_name");
         cmd.add("master.m3u8");
 
-        cmd.add("-var_stream_map");
-        cmd.add("v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3");
-
-        cmd.add(hlsTempDir + "/v%v/playlist.m3u8");
+        cmd.add(hlsTempDir.resolve("v%v/playlist.m3u8").toString());
         // endregion
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -181,6 +136,22 @@ public class VideoProcessingServiceImpl {
             log.error("An IO Exception occured during FFMPEG start : {}", e.getMessage());
             throw new RuntimeException();
         }
+    }
+
+    private void addQuality(int index, String videoBitRateInKPS, String audioBitrateInKPS, int width, List<String> cmd) {
+        cmd.add("-filter:v:" + index);
+
+        cmd.add("scale=w=" + width + ":h=-2");
+
+        cmd.add("-c:v:" + index);
+        cmd.add("libx264");
+        cmd.add("-b:v:" + index);
+        cmd.add(videoBitRateInKPS);
+
+        cmd.add("-c:a:" + index);
+        cmd.add("aac");
+        cmd.add("-b:a:" + index);
+        cmd.add(audioBitrateInKPS);
     }
 
     private void consumeProcessLogs(Process process) {
